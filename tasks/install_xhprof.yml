@@ -1,0 +1,33 @@
+---
+- name: Install php5-dev
+  apt: name=php5-dev state=present install_recommends=no update_cache=yes cache_valid_time=3600
+  sudo: yes
+
+- name: Install xhprof pecl package
+  shell: sudo pecl install -f xhprof
+  args:
+    creates: /usr/share/php/xhprof_lib/utils/xhprof_lib.php
+  sudo: yes
+
+- name: Set up config for xhprof in php and apache
+  template: src=xhprof.ini dest=/etc/php5/{{ item }}/conf.d/xhprof.ini
+  with_items:
+    - apache2
+    - cli
+  sudo: yes
+
+- name: Create the directory for xhprof virtual host
+  file: path=/var/www/xhprof state=directory mode=0755
+  sudo: yes
+
+- name: Create xhprof symlinks
+  file: src=/usr/share/php/xhprof_html/{{ item }} dest=/var/www/xhprof/{{ item }} state=link
+  with_items:
+    - callgraph.php
+    - index.php
+    - typeahead.php
+  sudo: yes
+
+- name: Create the directory for xhprof output
+  file: path=/var/tmp/xhprof state=directory mode=0666
+  sudo: yes
